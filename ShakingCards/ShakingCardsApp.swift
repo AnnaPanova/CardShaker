@@ -11,7 +11,7 @@ import SwiftUI
 struct ShakingCardsApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NotificationStack()
         }
     }
 }
