@@ -37,7 +37,7 @@ struct CardViewForMotion: View {
 // Main View
 struct CardShakeView:View {
     @State private var jumpCard: CardForMotion? = nil
-    @State private var motion = MotionManager()
+    @StateObject private var motion = MotionManager()
     
     @State private var cards: [CardForMotion] = [
         CardForMotion(title: "Kitchen"),
@@ -66,6 +66,12 @@ struct CardShakeView:View {
                 .multilineTextAlignment(.center)
                 
         }
+        .padding()
+        .onChange(of: motion.didShake) { newValue, oldValue in
+            if newValue {
+            triggerCardJump()
+            }
+        }
     }
     // function for offsetting card:
     private func offsetFor(_ card: CardForMotion) -> CGFloat {
@@ -85,6 +91,15 @@ struct CardShakeView:View {
         }
     }
     
+    // function for trigger card jumping
+    private func triggerCardJump() {
+        if let randomCard = cards.randomElement() {
+            jumpCard = randomCard
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                jumpCard = nil
+            }
+        }
+    }
     
     
 }
@@ -112,7 +127,7 @@ class MotionManager: ObservableObject {
     func startMotionUpdates() {
         if motionManager.isAccelerometerAvailable {
             motionManager.accelerometerUpdateInterval = 0.1
-            motionManager.startDeviceMotionUpdates()
+            motionManager.startAccelerometerUpdates()
             timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { _ in
                 if let data = self.motionManager.accelerometerData {
                     let acceleration = data.acceleration
@@ -120,6 +135,7 @@ class MotionManager: ObservableObject {
                     if abs(acceleration.x) > threshold || abs(acceleration.y) > threshold || abs(acceleration.z) > threshold {
                                           DispatchQueue.main.async {
                                               self.didShake = true
+                                              print("Shake detected!")
                                           }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                                                     self.didShake = false
